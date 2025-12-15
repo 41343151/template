@@ -276,8 +276,8 @@ int main() {
 
 ## 效能分析
 
-1. 時間複雜度：程式的時間複雜度為 *Eval:O(t) Add:O(n+m) Mult:O((nm)^2)*。
-2. 空間複雜度：空間複雜度為 *Eval:O(1) Add:O(n+m) Mult:O((nm))*。
+1. 時間複雜度：程式的時間複雜度為 Polynomial():O(1)  ~Polynomial():O(k)  operator>>:O(n)  operator<<:O(n)  operator+:O(m+n)   operator-:O(m+n)  operator*:O(m*n)  Evaluate:O(m)  GetNode / RetNode:O(1)。
+2. 空間複雜度：空間複雜度為 Polynomial():O(n)  operator+:O(m+n)   operator-:O(m+n)  operator*:O(m*n)  Evaluate:O(1)。
 
 ## 測試與驗證
 
@@ -294,8 +294,9 @@ int main() {
 ### 編譯與執行指令
 
 ```shell
-$ g++ -std=c++17 -O2 -Wall Homework2.cpp -o hw2.exe
-$ .\hw2.exe=
+$ g++ HW3.cpp -o HW3
+$ .\HW3
+
 ```
 
 ### 結論

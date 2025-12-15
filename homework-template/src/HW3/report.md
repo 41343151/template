@@ -16,7 +16,13 @@
 6. operator >>(輸入) 為了將「外部表示法」轉為內部 linked list，operator <<(輸出) 為了將內部資料結構轉回題目指定格式。
 7. operator + 完成多項式的加法運算，operator - 用於多項式的減法運算，operator * 用於多項式的乘法運算，Evaluate 驗證多項式內容是否正確，並提供實際應用功能。
 
-## 程式實作
+
+### 程式實作
+
+以下為主要程式碼：
+
+```cpp
+/*
 
 #include <iostream>
 #include <cmath>
@@ -264,6 +270,8 @@ int main() {
 
     return 0;
 }
+*/
+
 
 
 ## 效能分析

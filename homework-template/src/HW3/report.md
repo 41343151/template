@@ -22,7 +22,7 @@
 以下為主要程式碼：
 
 ```cpp
-/*
+
 
 #include <iostream>
 #include <cmath>
@@ -270,7 +270,7 @@ int main() {
 
     return 0;
 }
-*/
+
 
 
 

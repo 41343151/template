@@ -45,6 +45,75 @@ public:
         : data(d), link(l) {}
 };
 
+/*
+template <class T>
+class Chain {
+public:
+    typedef ChainIterator<T> iterator;
+
+private:
+    ChainNode<T>* head;   // header node (circular)
+
+public:
+    Chain() {
+        head = new ChainNode<T>();
+        head->link = head;
+    }
+
+    ~Chain() {
+        ChainNode<T>* cur = head->link;
+        while (cur != head) {
+            ChainNode<T>* temp = cur;
+            cur = cur->link;
+            delete temp;
+        }
+        delete head;
+    }
+
+    bool IsEmpty() const {
+        return head->link == head;
+    }
+
+    iterator Begin() const {
+        return iterator(head->link);
+    }
+
+    iterator End() const {
+        return iterator(head);
+    }
+
+    void PushBack(const T& x) {
+        ChainNode<T>* cur = head;
+        while (cur->link != head)
+            cur = cur->link;
+        cur->link = new ChainNode<T>(x, head);
+    }
+};
+
+*/
+
+/*
+template <class T>
+class ChainIterator {
+private:
+    ChainNode<T>* current;
+
+public:
+    ChainIterator(ChainNode<T>* start = nullptr) : current(start) {}
+
+    T& operator*() const { return current->data; }
+
+    ChainIterator<T>& operator++() {
+        current = current->link;
+        return *this;
+    }
+
+    bool operator!=(const ChainIterator<T>& rhs) const {
+        return current != rhs.current;
+    }
+};
+*/
+
 //簡化多項式的操作流程//
 class Polynomial {
 private:
@@ -271,6 +340,7 @@ int main() {
     return 0;
 }
 
+
 ```
 
 
@@ -300,8 +370,9 @@ $ .\HW3
 
 ### 結論
 
-1. 程式能正確計算當*exp*跟*coef*個別是多少時的答案。  
-2. 在*exp*是*0*或*負數*的情況下，程式是否正確，符合設計預期。  
+1. 程式能正確輸出*P1 P2*分別是多少、*P1+P2,P1-P2,P1*P2*輸出是否正確以及當數值輸入進去的時候*P1(x)*也會輸出正確的答案(驗算答案在上面圖片)。  
+2. 這個程式主要是利用*Circular Linked List & Header Node*來實作並完成多項式的輸入輸出、加減乘法與數值計算。
+3. 這個程式最後還有一個*Available List*來提升記憶體管理的效率，這個是為了避免輸入的變數過大以及程式碼太常導致電腦記憶體不足的部分。 
 
 ## 心得討論
 

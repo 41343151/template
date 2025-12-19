@@ -283,12 +283,11 @@ int main() {
 
 ### 測試案例
 
-<img width="392" height="156" alt="image" src="https://github.com/user-attachments/assets/a444156d-fe6d-4ae9-b4b7-18cc2f015b3b" />
+<img width="738" height="217" alt="image" src="https://github.com/user-attachments/assets/0e6dc5e4-5446-4bde-9269-46b70144ae78" />
 
-<img width="595" height="156" alt="image" src="https://github.com/user-attachments/assets/c40ff859-b5e0-459e-9803-2ebb83c43db9" />
+<img width="776" height="167" alt="image" src="https://github.com/user-attachments/assets/cf801f5d-8039-46cf-b576-2b3fad529ccc" />
 
-<img width="432" height="152" alt="image" src="https://github.com/user-attachments/assets/d5562730-7d0b-4ba9-88d1-d3571196fa34" />
-
+<img width="806" height="164" alt="image" src="https://github.com/user-attachments/assets/4a8d3fde-2475-4078-bc33-1e4c301c5ef2" />
 
 
 ### 編譯與執行指令

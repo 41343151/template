@@ -29,32 +29,37 @@ private:
 
     vector<vector<int>> adj;
 
+    // 瑕疵：額外使用 adjacency matrix，多花記憶體
     vector<vector<int>> matrix;
 
-    bool* visited;
+    vector<bool> visited;
 
-    int* dfn;
-    int* low;
+    struct Edge {
+        int u;
+        int v;
+        int weight;
+    };
+
+    vector<Edge> edges;
+
+    vector<int> dfn;
+    vector<int> low;
+    vector<int> parent;
+    vector<bool> articulation;
+
     int num;
-
-    stack<pair<int, int>> s;
-
-    vector<vector<int>> history;
+    stack<pair<int, int>> edgeStack;
 
 public:
     Graph(int vertices) {
         n = vertices;
         adj.resize(n);
-
         matrix.resize(n, vector<int>(n, 0));
-
-        visited = nullptr;
-        dfn = nullptr;
-        low = nullptr;
+        visited.resize(n, false);
         num = 1;
     }
 
-    void addEdge(int u, int v) {
+    void addEdge(int u, int v, int weight = 1) {
         if (u < 0 || v < 0 || u >= n || v >= n) {
             return;
         }
@@ -62,63 +67,73 @@ public:
         adj[u].push_back(v);
         adj[v].push_back(u);
 
-        matrix[u][v] = 1;
-        matrix[v][u] = 1;
+        // 瑕疵：同時用 matrix 儲存
+        matrix[u][v] = weight;
+        matrix[v][u] = weight;
+
+        edges.push_back({u, v, weight});
     }
 
+    // ================= DFS =================
     void DFS() {
-        visited = new bool[n];
-        fill(visited, visited + n, false);
+        fill(visited.begin(), visited.end(), false);
 
-        cout << "DFS: ";
-
+        // 瑕疵：複製整張圖
         vector<vector<int>> copyAdj = adj;
 
-        DFSUtil(0, copyAdj);
+        vector<int> dfsBackup;
 
+        cout << "DFS: ";
+        DFSUtil(0, copyAdj, dfsBackup);
         cout << endl;
-
-        delete[] visited;
-        visited = nullptr;
     }
 
-    void DFSUtil(int v, vector<vector<int>> copyAdj) {
+    void DFSUtil(int v, vector<vector<int>> copyAdj, vector<int>& dfsBackup) {
         visited[v] = true;
         cout << v << " ";
+        dfsBackup.push_back(v);
 
-        history.push_back(copyAdj[v]);
+        // 瑕疵：複製鄰居
+        vector<int> neighbors = copyAdj[v];
 
-        for (int w : copyAdj[v]) {
+        for (int w : neighbors) {
             if (!visited[w]) {
-                DFSUtil(w, copyAdj);
+                DFSUtil(w, copyAdj, dfsBackup);
             }
         }
     }
 
+    // ================= BFS =================
     void BFS(int start) {
         if (start < 0 || start >= n) {
             return;
         }
 
-        visited = new bool[n];
-        fill(visited, visited + n, false);
+        fill(visited.begin(), visited.end(), false);
+
+        // 瑕疵：額外備份 visited
+        vector<bool> visitedBackup(n, false);
+
+        // 瑕疵：複製 matrix
+        vector<vector<int>> copyMatrix = matrix;
 
         queue<int> q;
-        vector<bool> visitedBackup(n, false);
-        vector<vector<int>> copyMatrix = matrix;
+        q.push(start);
 
         visited[start] = true;
         visitedBackup[start] = true;
-        q.push(start);
 
         cout << "BFS: ";
 
         while (!q.empty()) {
-            int cur = q.front();
+            int current = q.front();
             q.pop();
 
-            cout << cur << " ";
-                if (copyMatrix[cur][i] == 1 && !visited[i]) {
+            cout << current << " ";
+
+            // 瑕疵：用 matrix 掃描，會比 adjacency list 花更多時間
+            for (int i = 0; i < n; i++) {
+                if (copyMatrix[current][i] != 0 && !visited[i]) {
                     visited[i] = true;
                     visitedBackup[i] = true;
                     q.push(i);
@@ -127,37 +142,46 @@ public:
         }
 
         cout << endl;
-
-        delete[] visited;
-        visited = nullptr;
     }
-    void Components() {
-        visited = new bool[n];
-        fill(visited, visited + n, false);
+
+    // ================= Connected Components =================
+    void ConnectedComponents() {
+        fill(visited.begin(), visited.end(), false);
+
+        // 瑕疵：複製 adjacency list
+        vector<vector<int>> copyAdj = adj;
+
+        int count = 0;
 
         cout << "Connected Components:" << endl;
 
-        int componentNumber = 1;
-
         for (int i = 0; i < n; i++) {
             if (!visited[i]) {
-                cout << "Component " << componentNumber << ": ";
-                vector<vector<int>> copyAdj = adj;
+                count++;
 
-                ComponentDFS(i, copyAdj);
+                cout << "Component " << count << ": ";
+
+                vector<int> componentBackup;
+
+                ComponentDFS(i, copyAdj, componentBackup);
 
                 cout << endl;
-                componentNumber++;
+
+                // 瑕疵：多備份一次 component
+                vector<int> extraBackup = componentBackup;
             }
         }
 
-        delete[] visited;
-        visited = nullptr;
+        cout << "Total Components: " << count << endl;
     }
 
-    void ComponentDFS(int v, vector<vector<int>> copyAdj) {
+    void ComponentDFS(int v, vector<vector<int>> copyAdj, vector<int>& componentBackup) {
         visited[v] = true;
         cout << v << " ";
+
+        componentBackup.push_back(v);
+
+        // 瑕疵：每次遞迴都建立一個多餘陣列
         vector<int> wasteMemory(n, -1);
 
         for (int i = 0; i < n; i++) {
@@ -166,142 +190,252 @@ public:
 
         for (int w : copyAdj[v]) {
             if (!visited[w]) {
-                ComponentDFS(w, copyAdj);
+                ComponentDFS(w, copyAdj, componentBackup);
             }
         }
     }
-    void DfnLow(int start) {
-        if (start < 0 || start >= n) {
-            return;
+
+    // ================= Spanning Tree =================
+    void SpanningTree() {
+        fill(visited.begin(), visited.end(), false);
+
+        vector<vector<int>> copyAdj = adj;
+        vector<pair<int, int>> treeEdges;
+
+        SpanningTreeDFS(0, copyAdj, treeEdges);
+
+        cout << "Spanning Tree Edges:" << endl;
+
+        for (auto e : treeEdges) {
+            cout << e.first << " - " << e.second << endl;
         }
 
-        dfn = new int[n];
-        low = new int[n];
-
-        fill(dfn, dfn + n, 0);
-        fill(low, low + n, 0);
-
-        num = 1;
-        vector<int> parent(n, -1);
-
-        DfnLowUtil(start, -1, parent);
-
-        cout << "DFN / LOW:" << endl;
-        for (int i = 0; i < n; i++) {
-            cout << "Vertex " << i
-                 << " -> dfn: " << dfn[i]
-                 << ", low: " << low[i] << endl;
-        }
-
-        delete[] dfn;
-        delete[] low;
-
-        dfn = nullptr;
-        low = nullptr;
+        // 瑕疵：多備份一次
+        vector<pair<int, int>> backupTreeEdges = treeEdges;
     }
 
-    void DfnLowUtil(int u, int parentVertex, vector<int> parent) {
-        dfn[u] = low[u] = num++;
+    void SpanningTreeDFS(
+        int v,
+        vector<vector<int>> copyAdj,
+        vector<pair<int, int>>& treeEdges
+    ) {
+        visited[v] = true;
 
-        parent[u] = parentVertex;
-        vector<int> neighbors = adj[u];
+        vector<int> neighbors = copyAdj[v];
 
         for (int w : neighbors) {
-            if (dfn[w] == 0) {
-                DfnLowUtil(w, u, parent);
-                low[u] = min(low[u], low[w]);
-            }
-            else if (w != parentVertex) {
-                low[u] = min(low[u], dfn[w]);
+            if (!visited[w]) {
+                treeEdges.push_back({v, w});
+                SpanningTreeDFS(w, copyAdj, treeEdges);
             }
         }
     }
-    void Biconnected() {
-        dfn = new int[n];
-        low = new int[n];
 
-        fill(dfn, dfn + n, 0);
-        fill(low, low + n, 0);
+    // ================= Biconnected / Articulation Point =================
+    void BiconnectedAndArticulation() {
+        dfn.assign(n, 0);
+        low.assign(n, 0);
+        parent.assign(n, -1);
+        articulation.assign(n, false);
 
         num = 1;
 
-        vector<pair<int, int>> allEdges;
-
-        for (int i = 0; i < n; i++) {
-            for (int w : adj[i]) {
-                allEdges.push_back({i, w});
-            }
+        // 清空 stack
+        while (!edgeStack.empty()) {
+            edgeStack.pop();
         }
 
         cout << "Biconnected Components:" << endl;
 
-        BiconnectedUtil(0, -1, allEdges);
+        for (int i = 0; i < n; i++) {
+            if (dfn[i] == 0) {
+                BiconnectedDFS(i);
+            }
+        }
 
-        delete[] dfn;
-        delete[] low;
+        cout << "Articulation Points: ";
 
-        dfn = nullptr;
-        low = nullptr;
+        bool found = false;
+
+        for (int i = 0; i < n; i++) {
+            if (articulation[i]) {
+                cout << i << " ";
+                found = true;
+            }
+        }
+
+        if (!found) {
+            cout << "None";
+        }
+
+        cout << endl;
     }
 
-    void BiconnectedUtil(int u, int parent, vector<pair<int, int>> allEdges) {
+    void BiconnectedDFS(int u) {
         dfn[u] = low[u] = num++;
 
+        int childCount = 0;
+
+        // 瑕疵：複製鄰居
         vector<int> neighbors = adj[u];
 
-        for (int w : neighbors) {
-            if ((parent != w) && (dfn[w] < dfn[u])) {
-                s.push({u, w});
-            }
+        for (int v : neighbors) {
+            if (dfn[v] == 0) {
+                childCount++;
+                parent[v] = u;
 
-            if (dfn[w] == 0) {
-                BiconnectedUtil(w, u, allEdges);
+                edgeStack.push({u, v});
 
-                low[u] = min(low[u], low[w]);
+                BiconnectedDFS(v);
 
-                if (low[w] >= dfn[u]) {
-                    cout << "New Biconnected Component:" << endl;
+                low[u] = min(low[u], low[v]);
+
+                if (parent[u] == -1 && childCount > 1) {
+                    articulation[u] = true;
+                }
+
+                if (parent[u] != -1 && low[v] >= dfn[u]) {
+                    articulation[u] = true;
+                }
+
+                if (low[v] >= dfn[u]) {
+                    cout << "Component: ";
 
                     pair<int, int> e;
 
                     do {
-                        if (s.empty()) {
+                        if (edgeStack.empty()) {
                             break;
                         }
 
-                        e = s.top();
-                        s.pop();
+                        e = edgeStack.top();
+                        edgeStack.pop();
 
-                        cout << e.first << " - " << e.second << endl;
+                        cout << "(" << e.first << "," << e.second << ") ";
 
-                    } while (!(e.first == u && e.second == w));
+                    } while (!(e.first == u && e.second == v));
 
                     cout << endl;
                 }
             }
-            else if (w != parent) {
-                low[u] = min(low[u], dfn[w]);
+            else if (v != parent[u] && dfn[v] < dfn[u]) {
+                low[u] = min(low[u], dfn[v]);
+                edgeStack.push({u, v});
             }
         }
     }
+
+    // ================= MST Kruskal =================
+    int findParent(vector<int>& parentSet, int x) {
+        if (parentSet[x] == x) {
+            return x;
+        }
+
+        return parentSet[x] = findParent(parentSet, parentSet[x]);
+    }
+
+    void unionSet(vector<int>& parentSet, vector<int>& rankSet, int a, int b) {
+        int rootA = findParent(parentSet, a);
+        int rootB = findParent(parentSet, b);
+
+        if (rootA != rootB) {
+            if (rankSet[rootA] < rankSet[rootB]) {
+                parentSet[rootA] = rootB;
+            }
+            else if (rankSet[rootA] > rankSet[rootB]) {
+                parentSet[rootB] = rootA;
+            }
+            else {
+                parentSet[rootB] = rootA;
+                rankSet[rootA]++;
+            }
+        }
+    }
+
+    void MST_Kruskal() {
+        // 瑕疵：複製所有邊
+        vector<Edge> copyEdges = edges;
+
+        // 瑕疵：複製 matrix
+        vector<vector<int>> matrixBackup = matrix;
+
+        sort(copyEdges.begin(), copyEdges.end(), [](Edge a, Edge b) {
+            return a.weight < b.weight;
+        });
+
+        vector<int> parentSet(n);
+        vector<int> rankSet(n, 0);
+
+        for (int i = 0; i < n; i++) {
+            parentSet[i] = i;
+        }
+
+        vector<Edge> mstEdges;
+        int totalCost = 0;
+
+        for (Edge e : copyEdges) {
+            int rootU = findParent(parentSet, e.u);
+            int rootV = findParent(parentSet, e.v);
+
+            if (rootU != rootV) {
+                mstEdges.push_back(e);
+                totalCost += e.weight;
+                unionSet(parentSet, rankSet, e.u, e.v);
+            }
+        }
+
+        cout << "MST Edges:" << endl;
+
+        for (Edge e : mstEdges) {
+            cout << e.u << " - " << e.v
+                 << " weight = " << e.weight << endl;
+        }
+
+        cout << "Total MST Cost: " << totalCost << endl;
+
+        // 瑕疵：多備份一次 MST 結果
+        vector<Edge> backupMST = mstEdges;
+    }
 };
 
+// ================= main =================
 int main() {
     Graph g(6);
 
-    // 建立無向圖
-    g.addEdge(0, 1);
-    g.addEdge(0, 2);
-    g.addEdge(1, 2);
-    g.addEdge(1, 3);
-    g.addEdge(3, 4);
-    g.addEdge(4, 5);
+    g.addEdge(0, 1, 4);
+    g.addEdge(0, 2, 3);
+    g.addEdge(1, 2, 2);
+    g.addEdge(1, 3, 5);
+    g.addEdge(3, 4, 1);
+    g.addEdge(4, 5, 6);
 
+    cout << "===== DFS =====" << endl;
     g.DFS();
+
+    cout << endl;
+
+    cout << "===== BFS =====" << endl;
     g.BFS(0);
-    g.Components();
-    g.DfnLow(0);
-    g.Biconnected();
+
+    cout << endl;
+
+    cout << "===== Connected Components =====" << endl;
+    g.ConnectedComponents();
+
+    cout << endl;
+
+    cout << "===== Spanning Tree =====" << endl;
+    g.SpanningTree();
+
+    cout << endl;
+
+    cout << "===== Biconnected / Articulation Point =====" << endl;
+    g.BiconnectedAndArticulation();
+
+    cout << endl;
+
+    cout << "===== MST =====" << endl;
+    g.MST_Kruskal();
 
     return 0;
 }

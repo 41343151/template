@@ -441,8 +441,11 @@ int main() {
 }
 ```
 
-## 效能分析
+<img width="637" height="760" alt="image" src="https://github.com/user-attachments/assets/d1ab77b8-3811-4622-8d15-d31e39b2c5af" />
+CPU只用不到1%
+記憶體使用1159.2MB
 
+## 效能分析
 1. 時間複雜度：程式的時間複雜度為 *O(n)*。
 2. 空間複雜度：空間複雜度為 *O(n)*。
 

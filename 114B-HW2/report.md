@@ -66,7 +66,7 @@ public:
         adj[u].push_back(v);
         adj[v].push_back(u);
 
-        // 瑕疵：同時用 matrix 儲存
+        
         matrix[u][v] = weight;
         matrix[v][u] = weight;
 

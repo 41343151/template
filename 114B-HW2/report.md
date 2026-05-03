@@ -1,5 +1,5 @@
 
-# 41343151 、 
+# 41343151 、 41343117
 
 作業二
 ## 解題說明
@@ -29,7 +29,6 @@ private:
 
     vector<vector<int>> adj;
 
-    // 瑕疵：額外使用 adjacency matrix，多花記憶體
     vector<vector<int>> matrix;
 
     vector<bool> visited;
@@ -74,11 +73,9 @@ public:
         edges.push_back({u, v, weight});
     }
 
-    // ================= DFS =================
     void DFS() {
         fill(visited.begin(), visited.end(), false);
 
-        // 瑕疵：複製整張圖
         vector<vector<int>> copyAdj = adj;
 
         vector<int> dfsBackup;
@@ -93,7 +90,6 @@ public:
         cout << v << " ";
         dfsBackup.push_back(v);
 
-        // 瑕疵：複製鄰居
         vector<int> neighbors = copyAdj[v];
 
         for (int w : neighbors) {
@@ -103,7 +99,6 @@ public:
         }
     }
 
-    // ================= BFS =================
     void BFS(int start) {
         if (start < 0 || start >= n) {
             return;
@@ -111,10 +106,8 @@ public:
 
         fill(visited.begin(), visited.end(), false);
 
-        // 瑕疵：額外備份 visited
         vector<bool> visitedBackup(n, false);
 
-        // 瑕疵：複製 matrix
         vector<vector<int>> copyMatrix = matrix;
 
         queue<int> q;
@@ -131,7 +124,6 @@ public:
 
             cout << current << " ";
 
-            // 瑕疵：用 matrix 掃描，會比 adjacency list 花更多時間
             for (int i = 0; i < n; i++) {
                 if (copyMatrix[current][i] != 0 && !visited[i]) {
                     visited[i] = true;
@@ -144,11 +136,9 @@ public:
         cout << endl;
     }
 
-    // ================= Connected Components =================
     void ConnectedComponents() {
         fill(visited.begin(), visited.end(), false);
 
-        // 瑕疵：複製 adjacency list
         vector<vector<int>> copyAdj = adj;
 
         int count = 0;
@@ -167,7 +157,6 @@ public:
 
                 cout << endl;
 
-                // 瑕疵：多備份一次 component
                 vector<int> extraBackup = componentBackup;
             }
         }
@@ -181,7 +170,6 @@ public:
 
         componentBackup.push_back(v);
 
-        // 瑕疵：每次遞迴都建立一個多餘陣列
         vector<int> wasteMemory(n, -1);
 
         for (int i = 0; i < n; i++) {
@@ -195,7 +183,6 @@ public:
         }
     }
 
-    // ================= Spanning Tree =================
     void SpanningTree() {
         fill(visited.begin(), visited.end(), false);
 
@@ -210,7 +197,6 @@ public:
             cout << e.first << " - " << e.second << endl;
         }
 
-        // 瑕疵：多備份一次
         vector<pair<int, int>> backupTreeEdges = treeEdges;
     }
 
@@ -231,7 +217,6 @@ public:
         }
     }
 
-    // ================= Biconnected / Articulation Point =================
     void BiconnectedAndArticulation() {
         dfn.assign(n, 0);
         low.assign(n, 0);
@@ -240,7 +225,6 @@ public:
 
         num = 1;
 
-        // 清空 stack
         while (!edgeStack.empty()) {
             edgeStack.pop();
         }
@@ -276,7 +260,6 @@ public:
 
         int childCount = 0;
 
-        // 瑕疵：複製鄰居
         vector<int> neighbors = adj[u];
 
         for (int v : neighbors) {
@@ -325,7 +308,6 @@ public:
         }
     }
 
-    // ================= MST Kruskal =================
     int findParent(vector<int>& parentSet, int x) {
         if (parentSet[x] == x) {
             return x;
@@ -353,10 +335,8 @@ public:
     }
 
     void MST_Kruskal() {
-        // 瑕疵：複製所有邊
         vector<Edge> copyEdges = edges;
 
-        // 瑕疵：複製 matrix
         vector<vector<int>> matrixBackup = matrix;
 
         sort(copyEdges.begin(), copyEdges.end(), [](Edge a, Edge b) {
@@ -393,12 +373,10 @@ public:
 
         cout << "Total MST Cost: " << totalCost << endl;
 
-        // 瑕疵：多備份一次 MST 結果
         vector<Edge> backupMST = mstEdges;
     }
 };
 
-// ================= main =================
 int main() {
     Graph g(6);
 

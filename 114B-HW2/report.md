@@ -4,13 +4,12 @@
 作業二
 ## 解題說明
 
-本題要求參考題目附圖MaxPQ範例，寫出相似的C++抽象列別並實作MinPQ。
+本題要求參考PPT做出一個Graph類別，可以存取頂點和邊的資料，再來利用存取的資料去完成DFS、BFS、Connected Components、Spanning Tree、Biconnected / Articulation Pointc和MST最小生成樹。
 
 ### 解題策略
 
-1. 
-2. 
-3. 
+1. 利用圖形結構完成多種圖形演算法
+2. 建立圖形資料、進行圖形走訪、分析圖的共通性、分析圖形結構
 ## 程式實作
 
 以下為主要程式碼：

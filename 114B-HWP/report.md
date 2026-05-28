@@ -1,15 +1,16 @@
 
 # 41343151 、 41343117
 
-作業二
+Homework Sorting Project
 ## 解題說明
 
-本題要求參考PPT做出一個Graph類別，可以存取頂點和邊的資料，再來利用存取的資料去完成DFS、BFS、Connected Components、Spanning Tree、Biconnected / Articulation Pointc和MST最小生成樹。
+本題要求設計一個綜合排序程式，將 Insertion Sort、Quick Sort、Merge Sort 和 Heap Sort 整合在同一個程式中，並針對不同資料量產生測試資料進行排序與計時，再依照測試結果設計 Composite Sort，使程式能根據資料量選擇較合適的排序法。
 
 ### 解題策略
 
-1. 利用圖形結構完成多種圖形演算法
-2. 建立圖形資料、進行圖形走訪、分析圖的共通性、分析圖形結構
+1. 整合四種排序演算法，完成同一個排序測試程式。
+2. 建立不同測試資料，測量各排序法在不同資料量下的執行時間。
+3. 據測試結果選擇適合的排序法，完成 Composite Sort 綜合排序。
 ## 程式實作
 
 以下為主要程式碼：
@@ -17,441 +18,571 @@
 ```cpp
 #include <iostream>
 #include <vector>
-#include <queue>
-#include <stack>
 #include <algorithm>
+#include <random>
+#include <chrono>
+#include <iomanip>
+#include <cstdlib>
+#include <ctime>
+
 using namespace std;
+using namespace chrono;
 
-class Graph {
-private:
-    int n;
-
-    vector<vector<int>> adj;
-
-    vector<vector<int>> matrix;
-
-    vector<bool> visited;
-
-    struct Edge {
-        int u;
-        int v;
-        int weight;
-    };
-
-    vector<Edge> edges;
-
-    vector<int> dfn;
-    vector<int> low;
-    vector<int> parent;
-    vector<bool> articulation;
-
-    int num;
-    stack<pair<int, int>> edgeStack;
-
-public:
-    Graph(int vertices) {
-        n = vertices;
-        adj.resize(n);
-        matrix.resize(n, vector<int>(n, 0));
-        visited.resize(n, false);
-        num = 1;
-    }
-
-    void addEdge(int u, int v, int weight = 1) {
-        if (u < 0 || v < 0 || u >= n || v >= n) {
-            return;
-        }
-
-        adj[u].push_back(v);
-        adj[v].push_back(u);
-
-        
-        matrix[u][v] = weight;
-        matrix[v][u] = weight;
-
-        edges.push_back({u, v, weight});
-    }
-
-    void DFS() {
-        fill(visited.begin(), visited.end(), false);
-
-        vector<vector<int>> copyAdj = adj;
-
-        vector<int> dfsBackup;
-
-        cout << "DFS: ";
-        DFSUtil(0, copyAdj, dfsBackup);
-        cout << endl;
-    }
-
-    void DFSUtil(int v, vector<vector<int>> copyAdj, vector<int>& dfsBackup) {
-        visited[v] = true;
-        cout << v << " ";
-        dfsBackup.push_back(v);
-
-        vector<int> neighbors = copyAdj[v];
-
-        for (int w : neighbors) {
-            if (!visited[w]) {
-                DFSUtil(w, copyAdj, dfsBackup);
+bool isSorted(vector<int> arr)
+{
+    for (int i = 0; i < arr.size(); i++)
+    {
+        for (int j = i + 1; j < arr.size(); j++)
+        {
+            if (arr[i] > arr[j])
+            {
+                return false;
             }
         }
     }
 
-    void BFS(int start) {
-        if (start < 0 || start >= n) {
-            return;
-        }
+    return true;
+}
 
-        fill(visited.begin(), visited.end(), false);
+void insertionSort(vector<int>& arr)
+{
+    int n = arr.size();
 
-        vector<bool> visitedBackup(n, false);
+    for (int i = 1; i < n; i++)
+    {
+        int temp = arr[i];
+        int j = i - 1;
 
-        vector<vector<int>> copyMatrix = matrix;
-
-        queue<int> q;
-        q.push(start);
-
-        visited[start] = true;
-        visitedBackup[start] = true;
-
-        cout << "BFS: ";
-
-        while (!q.empty()) {
-            int current = q.front();
-            q.pop();
-
-            cout << current << " ";
-
-            for (int i = 0; i < n; i++) {
-                if (copyMatrix[current][i] != 0 && !visited[i]) {
-                    visited[i] = true;
-                    visitedBackup[i] = true;
-                    q.push(i);
-                }
+        while (j >= 0)
+        {
+            if (arr[j] > temp)
+            {
+                arr[j + 1] = arr[j];
+                j--;
+            }
+            else
+            {
+                break;
             }
         }
 
-        cout << endl;
+        arr[j + 1] = temp;
     }
+}
 
-    void ConnectedComponents() {
-        fill(visited.begin(), visited.end(), false);
+void insertionSortRange(vector<int>& arr, int left, int right)
+{
+    for (int i = left + 1; i <= right; i++)
+    {
+        int temp = arr[i];
+        int j = i - 1;
 
-        vector<vector<int>> copyAdj = adj;
-
-        int count = 0;
-
-        cout << "Connected Components:" << endl;
-
-        for (int i = 0; i < n; i++) {
-            if (!visited[i]) {
-                count++;
-
-                cout << "Component " << count << ": ";
-
-                vector<int> componentBackup;
-
-                ComponentDFS(i, copyAdj, componentBackup);
-
-                cout << endl;
-
-                vector<int> extraBackup = componentBackup;
-            }
+        while (j >= left && arr[j] > temp)
+        {
+            arr[j + 1] = arr[j];
+            j--;
         }
 
-        cout << "Total Components: " << count << endl;
+        arr[j + 1] = temp;
+    }
+}
+
+int medianOfThree(vector<int>& arr, int left, int right)
+{
+    int mid = (left + right) / 2;
+
+    if (arr[left] > arr[mid])
+    {
+        swap(arr[left], arr[mid]);
     }
 
-    void ComponentDFS(int v, vector<vector<int>> copyAdj, vector<int>& componentBackup) {
-        visited[v] = true;
-        cout << v << " ";
-
-        componentBackup.push_back(v);
-
-        vector<int> wasteMemory(n, -1);
-
-        for (int i = 0; i < n; i++) {
-            wasteMemory[i] = i;
-        }
-
-        for (int w : copyAdj[v]) {
-            if (!visited[w]) {
-                ComponentDFS(w, copyAdj, componentBackup);
-            }
-        }
+    if (arr[left] > arr[right])
+    {
+        swap(arr[left], arr[right]);
     }
 
-    void SpanningTree() {
-        fill(visited.begin(), visited.end(), false);
-
-        vector<vector<int>> copyAdj = adj;
-        vector<pair<int, int>> treeEdges;
-
-        SpanningTreeDFS(0, copyAdj, treeEdges);
-
-        cout << "Spanning Tree Edges:" << endl;
-
-        for (auto e : treeEdges) {
-            cout << e.first << " - " << e.second << endl;
-        }
-
-        vector<pair<int, int>> backupTreeEdges = treeEdges;
+    if (arr[mid] > arr[right])
+    {
+        swap(arr[mid], arr[right]);
     }
 
-    void SpanningTreeDFS(
-        int v,
-        vector<vector<int>> copyAdj,
-        vector<pair<int, int>>& treeEdges
-    ) {
-        visited[v] = true;
+    swap(arr[mid], arr[right - 1]);
 
-        vector<int> neighbors = copyAdj[v];
+    return arr[right - 1];
+}
 
-        for (int w : neighbors) {
-            if (!visited[w]) {
-                treeEdges.push_back({v, w});
-                SpanningTreeDFS(w, copyAdj, treeEdges);
-            }
+void quickSortRecursive(vector<int>& arr, int left, int right)
+{
+    if (left >= right)
+    {
+        return;
+    }
+
+    if (right - left <= 20)
+    {
+        insertionSortRange(arr, left, right);
+        return;
+    }
+
+    int pivot = medianOfThree(arr, left, right);
+
+    int i = left;
+    int j = right - 1;
+
+    while (true)
+    {
+        while (arr[++i] < pivot)
+        {
+        }
+
+        while (arr[--j] > pivot)
+        {
+        }
+
+        if (i < j)
+        {
+            swap(arr[i], arr[j]);
+        }
+        else
+        {
+            break;
         }
     }
 
-    void BiconnectedAndArticulation() {
-        dfn.assign(n, 0);
-        low.assign(n, 0);
-        parent.assign(n, -1);
-        articulation.assign(n, false);
+    swap(arr[i], arr[right - 1]);
 
-        num = 1;
+    quickSortRecursive(arr, left, i - 1);
+    quickSortRecursive(arr, i + 1, right);
+}
 
-        while (!edgeStack.empty()) {
-            edgeStack.pop();
-        }
-
-        cout << "Biconnected Components:" << endl;
-
-        for (int i = 0; i < n; i++) {
-            if (dfn[i] == 0) {
-                BiconnectedDFS(i);
-            }
-        }
-
-        cout << "Articulation Points: ";
-
-        bool found = false;
-
-        for (int i = 0; i < n; i++) {
-            if (articulation[i]) {
-                cout << i << " ";
-                found = true;
-            }
-        }
-
-        if (!found) {
-            cout << "None";
-        }
-
-        cout << endl;
+void quickSort(vector<int>& arr)
+{
+    if (arr.size() <= 1)
+    {
+        return;
     }
 
-    void BiconnectedDFS(int u) {
-        dfn[u] = low[u] = num++;
+    quickSortRecursive(arr, 0, arr.size() - 1);
+}
 
-        int childCount = 0;
+void mergeParts(vector<int>& arr, int left, int mid, int right)
+{
+    vector<int> leftArray;
+    vector<int> rightArray;
 
-        vector<int> neighbors = adj[u];
+    for (int i = left; i <= mid; i++)
+    {
+        leftArray.push_back(arr[i]);
+    }
 
-        for (int v : neighbors) {
-            if (dfn[v] == 0) {
-                childCount++;
-                parent[v] = u;
+    for (int i = mid + 1; i <= right; i++)
+    {
+        rightArray.push_back(arr[i]);
+    }
 
-                edgeStack.push({u, v});
+    int i = 0;
+    int j = 0;
+    int k = left;
 
-                BiconnectedDFS(v);
+    while (i < leftArray.size() && j < rightArray.size())
+    {
+        if (leftArray[i] <= rightArray[j])
+        {
+            arr[k] = leftArray[i];
+            i++;
+        }
+        else
+        {
+            arr[k] = rightArray[j];
+            j++;
+        }
 
-                low[u] = min(low[u], low[v]);
+        k++;
+    }
 
-                if (parent[u] == -1 && childCount > 1) {
-                    articulation[u] = true;
-                }
+    while (i < leftArray.size())
+    {
+        arr[k] = leftArray[i];
+        i++;
+        k++;
+    }
 
-                if (parent[u] != -1 && low[v] >= dfn[u]) {
-                    articulation[u] = true;
-                }
+    while (j < rightArray.size())
+    {
+        arr[k] = rightArray[j];
+        j++;
+        k++;
+    }
+}
 
-                if (low[v] >= dfn[u]) {
-                    cout << "Component: ";
+void mergeSort(vector<int>& arr)
+{
+    int n = arr.size();
 
-                    pair<int, int> e;
+    int size = 1;
 
-                    do {
-                        if (edgeStack.empty()) {
-                            break;
-                        }
+    while (size < n)
+    {
+        int left = 0;
 
-                        e = edgeStack.top();
-                        edgeStack.pop();
+        while (left < n - 1)
+        {
+            int mid = left + size - 1;
+            int right = left + 2 * size - 1;
 
-                        cout << "(" << e.first << "," << e.second << ") ";
-
-                    } while (!(e.first == u && e.second == v));
-
-                    cout << endl;
-                }
+            if (mid >= n)
+            {
+                mid = n - 1;
             }
-            else if (v != parent[u] && dfn[v] < dfn[u]) {
-                low[u] = min(low[u], dfn[v]);
-                edgeStack.push({u, v});
+
+            if (right >= n)
+            {
+                right = n - 1;
             }
+
+            if (mid < right)
+            {
+                mergeParts(arr, left, mid, right);
+            }
+
+            left = left + 2 * size;
+        }
+
+        size = size * 2;
+    }
+}
+
+void heapify(vector<int>& arr, int n, int i)
+{
+    int largest = i;
+
+    int left = 2 * i + 1;
+    int right = 2 * i + 2;
+
+    if (left < n)
+    {
+        if (arr[left] > arr[largest])
+        {
+            largest = left;
         }
     }
 
-    int findParent(vector<int>& parentSet, int x) {
-        if (parentSet[x] == x) {
-            return x;
-        }
-
-        return parentSet[x] = findParent(parentSet, parentSet[x]);
-    }
-
-    void unionSet(vector<int>& parentSet, vector<int>& rankSet, int a, int b) {
-        int rootA = findParent(parentSet, a);
-        int rootB = findParent(parentSet, b);
-
-        if (rootA != rootB) {
-            if (rankSet[rootA] < rankSet[rootB]) {
-                parentSet[rootA] = rootB;
-            }
-            else if (rankSet[rootA] > rankSet[rootB]) {
-                parentSet[rootB] = rootA;
-            }
-            else {
-                parentSet[rootB] = rootA;
-                rankSet[rootA]++;
-            }
+    if (right < n)
+    {
+        if (arr[right] > arr[largest])
+        {
+            largest = right;
         }
     }
 
-    void MST_Kruskal() {
-        vector<Edge> copyEdges = edges;
+    if (largest != i)
+    {
+        int temp = arr[i];
+        arr[i] = arr[largest];
+        arr[largest] = temp;
 
-        vector<vector<int>> matrixBackup = matrix;
-
-        sort(copyEdges.begin(), copyEdges.end(), [](Edge a, Edge b) {
-            return a.weight < b.weight;
-        });
-
-        vector<int> parentSet(n);
-        vector<int> rankSet(n, 0);
-
-        for (int i = 0; i < n; i++) {
-            parentSet[i] = i;
-        }
-
-        vector<Edge> mstEdges;
-        int totalCost = 0;
-
-        for (Edge e : copyEdges) {
-            int rootU = findParent(parentSet, e.u);
-            int rootV = findParent(parentSet, e.v);
-
-            if (rootU != rootV) {
-                mstEdges.push_back(e);
-                totalCost += e.weight;
-                unionSet(parentSet, rankSet, e.u, e.v);
-            }
-        }
-
-        cout << "MST Edges:" << endl;
-
-        for (Edge e : mstEdges) {
-            cout << e.u << " - " << e.v
-                 << " weight = " << e.weight << endl;
-        }
-
-        cout << "Total MST Cost: " << totalCost << endl;
-
-        vector<Edge> backupMST = mstEdges;
+        heapify(arr, n, largest);
     }
-};
+}
 
-int main() {
-    Graph g(6);
+void heapSort(vector<int>& arr)
+{
+    int n = arr.size();
 
-    g.addEdge(0, 1, 4);
-    g.addEdge(0, 2, 3);
-    g.addEdge(1, 2, 2);
-    g.addEdge(1, 3, 5);
-    g.addEdge(3, 4, 1);
-    g.addEdge(4, 5, 6);
+    for (int i = n / 2 - 1; i >= 0; i--)
+    {
+        heapify(arr, n, i);
+    }
 
-    cout << "===== DFS =====" << endl;
-    g.DFS();
+    for (int i = n - 1; i >= 1; i--)
+    {
+        int temp = arr[0];
+        arr[0] = arr[i];
+        arr[i] = temp;
 
+        heapify(arr, i, 0);
+    }
+}
+
+vector<int> generateSortedData(int n)
+{
+    vector<int> arr;
+
+    for (int i = 1; i <= n; i++)
+    {
+        arr.push_back(i);
+    }
+
+    return arr;
+}
+
+vector<int> generateReverseData(int n)
+{
+    vector<int> arr;
+
+    for (int i = n; i >= 1; i--)
+    {
+        arr.push_back(i);
+    }
+
+    return arr;
+}
+
+vector<int> generateRandomPermutation(int n)
+{
+    vector<int> arr;
+
+    for (int i = 1; i <= n; i++)
+    {
+        arr.push_back(i);
+    }
+
+    for (int i = n - 1; i >= 1; i--)
+    {
+        int j = rand() % (i + 1);
+
+        int temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+
+    return arr;
+}
+
+vector<int> generateMergeWorstCase(vector<int> arr)
+{
+    int n = arr.size();
+
+    if (n <= 1)
+    {
+        return arr;
+    }
+
+    vector<int> left;
+    vector<int> right;
+
+    for (int i = 0; i < n; i++)
+    {
+        if (i % 2 == 0)
+        {
+            left.push_back(arr[i]);
+        }
+        else
+        {
+            right.push_back(arr[i]);
+        }
+    }
+
+    left = generateMergeWorstCase(left);
+    right = generateMergeWorstCase(right);
+
+    vector<int> result;
+
+    for (int i = 0; i < left.size(); i++)
+    {
+        result.push_back(left[i]);
+    }
+
+    for (int i = 0; i < right.size(); i++)
+    {   
+        result.push_back(right[i]);
+    }
+
+    return result;
+}
+
+vector<int> generateMergeWorstCaseData(int n)
+{
+    vector<int> arr = generateSortedData(n);
+    vector<int> result = generateMergeWorstCase(arr);
+
+    return result;
+}
+
+double measureTime(void (*sortFunction)(vector<int>&), vector<int> data, int repeatTimes)
+{
+    double total = 0.0;
+
+    for (int i = 0; i < repeatTimes; i++)
+    {
+        vector<int> copyData;
+
+        for (int j = 0; j < data.size(); j++)
+        {
+            copyData.push_back(data[j]);
+        }
+
+        auto start = high_resolution_clock::now();
+
+        sortFunction(copyData);
+
+        auto end = high_resolution_clock::now();
+
+        duration<double, milli> elapsed = end - start;
+
+        total = total + elapsed.count();
+
+        if (!isSorted(copyData))
+        {
+            cout << "Sorting error!" << endl;
+        }
+    }
+
+    return total / repeatTimes;
+}
+
+double measureWorstRandomTime(void (*sortFunction)(vector<int>&), int n, int permutationCount)
+{
+    double maxTime = 0.0;
+
+    for (int i = 0; i < permutationCount; i++)
+    {
+        vector<int> data = generateRandomPermutation(n);
+
+        auto start = high_resolution_clock::now();
+
+        sortFunction(data);
+
+        auto end = high_resolution_clock::now();
+
+        duration<double, milli> elapsed = end - start;
+
+        if (elapsed.count() > maxTime)
+        {
+            maxTime = elapsed.count();
+        }
+
+        if (!isSorted(data))
+        {
+            cout << "Sorting error!" << endl;
+        }
+    }
+
+    return maxTime;
+}
+
+void compositeSort(vector<int>& arr)
+{
+    int n = arr.size();
+
+    if (n <= 100)
+    {
+        insertionSort(arr);
+    }
+    else if (n <= 2000)
+    {
+        quickSort(arr);
+    }
+    else if (n <= 4000)
+    {
+        mergeSort(arr);
+    }
+    else
+    {
+        heapSort(arr);
+    }
+}
+
+int main()
+{
+    srand(time(0));
+
+    vector<int> sizes;
+
+    sizes.push_back(500);
+    sizes.push_back(1000);
+    sizes.push_back(2000);
+    sizes.push_back(3000);
+    sizes.push_back(4000);
+    sizes.push_back(5000);
+
+    int repeatTimes = 5;
+    int permutationCount = 10;
+
+    cout << fixed << setprecision(4);
+
+    cout << "Clock used: C++ chrono high_resolution_clock" << endl;
+    cout << "Repeat times: " << repeatTimes << endl;
+    cout << "Random permutations: " << permutationCount << endl;
     cout << endl;
 
-    cout << "===== BFS =====" << endl;
-    g.BFS(0);
+    cout << "================ Worst-Case Runtime Experiment ================" << endl;
+
+    cout << setw(8) << "n"
+         << setw(18) << "Insertion"
+         << setw(18) << "Quick"
+         << setw(18) << "Merge"
+         << setw(18) << "Heap"
+         << setw(18) << "Composite"
+         << endl;
+
+    cout << "--------------------------------------------------------------------------------------------" << endl;
+
+    for (int i = 0; i < sizes.size(); i++)
+    {
+        int n = sizes[i];
+
+        vector<int> insertionData = generateReverseData(n);
+        vector<int> mergeData = generateMergeWorstCaseData(n);
+        vector<int> compositeData = generateReverseData(n);
+
+        double insertionTime = measureTime(insertionSort, insertionData, repeatTimes);
+        double quickTime = measureWorstRandomTime(quickSort, n, permutationCount);
+        double mergeTime = measureTime(mergeSort, mergeData, repeatTimes);
+        double heapTime = measureWorstRandomTime(heapSort, n, permutationCount);
+        double compositeTime = measureTime(compositeSort, compositeData, repeatTimes);
+
+        cout << setw(8) << n
+             << setw(18) << insertionTime
+             << setw(18) << quickTime
+             << setw(18) << mergeTime
+             << setw(18) << heapTime
+             << setw(18) << compositeTime
+             << endl;
+    }
 
     cout << endl;
-
-    cout << "===== Connected Components =====" << endl;
-    g.ConnectedComponents();
-
-    cout << endl;
-
-    cout << "===== Spanning Tree =====" << endl;
-    g.SpanningTree();
-
-    cout << endl;
-
-    cout << "===== Biconnected / Articulation Point =====" << endl;
-    g.BiconnectedAndArticulation();
-
-    cout << endl;
-
-    cout << "===== MST =====" << endl;
-    g.MST_Kruskal();
+    cout << "Unit: milliseconds" << endl;
 
     return 0;
 }
 ```
 
-<img width="637" height="760" alt="image" src="https://github.com/user-attachments/assets/d1ab77b8-3811-4622-8d15-d31e39b2c5af" />
+<img width="642" height="391" alt="image" src="https://github.com/user-attachments/assets/422779f4-fef5-4311-9855-359d643e1090" />
 CPU只用不到1%
-記憶體使用1159.2MB
+記憶體使用801.2MB
 
 ## 效能分析
-1. 時間複雜度：程式的時間複雜度為 *O(V × (V + E) + E log E)*。
-2. 空間複雜度：空間複雜度為 *O(V² + E)*。
+1. 時間複雜度：程式的時間複雜度為 *O(n² + k · n log n)*。
+2. 空間複雜度：空間複雜度為 *O(n)*。
 
 ## 測試與驗證
 
 ### 測試案例
 
-| 測試案例 | 輸入參數V | 輸入參數E | 預期輸出(CC ATP MST) | 實際輸出 |
-|---------|-----------|----------|---------------------|-------------|
-| 測試一   | *6*      | *6*      | 1 1、3、4 17         | 1 1、3、4 17|
-| 測試二   | *7*      | *4*      | 3 1、4 10            | 3 1、4 10  |
-| 測試三   | *5*      | *7*      | 1 None 18            | 1 None 18  |
+| 輸入參數n   | Insertion       |   Quick        |    Merge   |    Heap   |    Composite   |
+|-------------|----------------|----------------|------------|------------|------------|
+| *500*       | *0.1278*       |     0.0000     | 0.6362     | 0.0000     | 0.0000    |
+| *1000*      | *0.0000*       |     0.0000     | 0.4066     | 0.4600     | 0.0000    |
+| *2000*      | *7.5004*       |     0.0000     | 1.3468     | 2.8450     | 0.0000    |
+| *3000*      | *14.6378*      |     2.0040     | 0.7206     | 0.0000     | 1.7148    |
+| *4000*      | *29.9296*      |     0.0000     | 3.2832     | 6.9540     | 3.2354    |
+| *5000*      | *47.5894*      |     5.4810     | 2.5382     | 10.8310    | 0.0000    |
 
 ### 編譯與執行指令
 
 ```shell
-g++ graph_homework.cpp -o graph_homework
-./graph_homework
+g++ SortingExperiment_Flawed.cpp -o SortingExperiment_Flawed
 ```
 
 ### 結論
 
+1.### 結論
+
 1.本次作業讓我們練習多種圖形演算法實作 
-2.程式使用多種資料結構輔助運算
+2.程式透過不同資料量比較各排序法的執行效率。
 
 
 ### 心得與討論
-本次作業主要是透過圖形演算法來分析圖的結構與連通關係。程式先建立無向加權圖，再分別使用 DFS、BFS、Connected Components、Spanning Tree、Biconnected / Articulation Point 和 MST 進行處理。透過 DFS 和 BFS 可以了解圖形不同的走訪方式。Connected Components 可以判斷圖中是否有多個連通區塊。Articulation Point 可以找出影響圖形連通性的關鍵頂點。MST 則可以找出連接所有頂點且總成本最低的邊。整體來說，本次作業讓我更了解圖形資料結構不只是單單可以用來表示節點之間的關係，也可以透過不同演算法解決搜尋、連通性判斷與最小成本連接等問題。
-  
-
-
-
+本次作業主要是透過排序演算法來比較不同方法在資料處理上的效率。程式先建立 Insertion Sort、Quick Sort、Merge Sort 和 Heap Sort，再針對不同資料量產生測試資料並進行排序與計時。透過實作可以發現，不同排序法在不同資料量下會有不同的表現。Insertion Sort 在資料量小時較容易實作，但資料量變大時效率會明顯下降。Quick Sort 平均效率較好，Merge Sort 和 Heap Sort 則在較大資料量下表現較穩定。最後透過 Composite Sort，可以依照資料量選擇較適合的排序法。整體來說，本次作業讓我更了解排序演算法不只是單純將資料由小到大排列，也能透過時間測試與資料量分析，判斷不同演算法在實際程式中的效能差異。
+   
